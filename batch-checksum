@@ -1,0 +1,19 @@
+#!/bin/bash
+INPUT=$1
+OUTPUT=$2
+OLDIFS=$IFS
+IFS=,
+[ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
+firstloop="TRUE"
+
+while read id link checksum
+do
+        if [ "${#checksum}" -lt "32" ] && [ "$firstloop" != "TRUE" ]; then
+                wget -O temp.jpg $link
+                checksum=`md5sum temp.jpg | cut -f 1 -d " "`
+                rm temp.jpg
+        fi
+        firstloop="FALSE"
+        echo "$id,$link,$checksum" >> $OUTPUT
+done < $INPUT
+IFS=$OLDIFS
