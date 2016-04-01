@@ -1,0 +1,34 @@
+#!/bin/bash
+#AUTOEVO script created by Jon Packard. This automates running Evolution, sending and recieving messages and restarting Evolution in order to purge deleted messages from Unity server.
+
+let COUNT=0					#Initializes run count as 0
+while true; do					#Loop until ^C command is passed
+        evocheck=`pidof evolution`		#Retrieve PID of Evolution
+        if [ "$evocheck" = "" ]; then
+                evolution&			#Starts Evolution if not running.
+        fi
+        
+	sleep 60				#Waits 60 seconds
+        
+	wmctrl -a " - Evolution"		#Brings evolution to focus, unminimizing it if necessary
+	sleep 2					#Ensures Evolution is in focus.
+
+	if [ "$COUNT" -gt "600" ]; then		#If script has run more than 600 times, quits Evolution, causing deleted messages to be purged from Unity server.
+		sleep 60			#Waits one extra minute to finish sending/receiving mail
+		xte "keydown Control_L"		#Sends quit command to Evolution
+		xte "key q"
+		xte "keyup Control_L"
+		sleep 30			#Waits 10 seconds after attempting to close Evolution
+	        evocheck=`pidof evolution`	#Retrieve PID of Evolution
+        	if [ "$evocheck" != "" ]; then
+        	        xte "keydown Alt_L"	#If evolution is still running due to messages still in outbox, send Alt-Q to quit anyways.
+			xte "key q"
+			xte "keyup Alt_L"
+			sleep 30		#Waits 30 senconds to make sure Evolution finished closing.
+        	fi
+		let COUNT=0			#Resets run count to 0
+	else
+		let COUNT=COUNT+1		#Increments run count by 1
+		xte "key F9"			#Hit Send/Receive in Evolution
+	fi
+done
